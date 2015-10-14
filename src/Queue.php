@@ -39,7 +39,7 @@ class Queue
      * @return \AMQPQueue
      * @throws \Exception on missing consumer configuration.
      */
-    public static function consume($name)
+    public static function consume($name, array $options = [])
     {
         $config = static::get($name);
         if (empty($config['consume'])) {
@@ -47,6 +47,7 @@ class Queue
         }
 
         $config = $config['consume'];
+        $config += $options;
         $config += [
             'connection' => 'rabbit',
             'prefetchCount' => 1,

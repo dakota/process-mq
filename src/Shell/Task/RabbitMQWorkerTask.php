@@ -47,12 +47,12 @@ class RabbitMQWorkerTask extends Shell
      * @param callable $callable
      * @return void
      */
-    public function consume($config, callable $callable)
+    public function consume($config, callable $callable, $flags = AMQP_NOPARAM)
     {
         $this->ProcessManager->handleKillSignals();
         $this->eventManager()->attach([$this, 'signalHandler'], 'CLI.signal', ['priority' => 100]);
 
-        $this->_consume(Queue::consume($config), $callable);
+        $this->_consume(Queue::consume($config), $flags, $callable);
     }
 
     /**
@@ -63,7 +63,7 @@ class RabbitMQWorkerTask extends Shell
      * @param callable $callable
      * @return void
      */
-    protected function _consume(AMQPQueue $queue, callable $callable)
+    protected function _consume(AMQPQueue $queue, $flags, callable $callable)
     {
         $tag = uniqid() . microtime(true);
 
@@ -71,7 +71,7 @@ class RabbitMQWorkerTask extends Shell
             return $this->_callback($callable, $envelope, $queue);
         };
 
-        $queue->consume($callback, AMQP_NOPARAM, $tag);
+        $queue->consume($callback, $flags, $tag);
     }
 
     /**
