@@ -49,8 +49,8 @@ class RabbitMQWorkerTask extends Shell
      */
     public function consume($config, callable $callable, $flags = AMQP_NOPARAM)
     {
+        $this->ProcessManager->eventManager()->attach([$this, 'signalHandler'], 'CLI.signal', ['priority' => 100]);
         $this->ProcessManager->handleKillSignals();
-        $this->eventManager()->attach([$this, 'signalHandler'], 'CLI.signal', ['priority' => 100]);
 
         $this->_consume(Queue::consume($config), $flags, $callable);
     }
@@ -86,10 +86,6 @@ class RabbitMQWorkerTask extends Shell
      */
     protected function _callback(callable $callable, AMQPEnvelope $envelope, AMQPQueue $queue)
     {
-        if ($this->stop) {
-            return false;
-        }
-
         if ($envelope === false) {
             return false;
         }
@@ -97,6 +93,7 @@ class RabbitMQWorkerTask extends Shell
         if ($this->stop) {
             $this->log('-> Putting job back into the queue', 'warning');
             $queue->nack($envelope->getDeliveryTag(), AMQP_REQUEUE);
+            $this->_stop();
             return false;
         }
 
@@ -104,6 +101,7 @@ class RabbitMQWorkerTask extends Shell
 
         try {
             $this->_working = true;
+            pcntl_signal_dispatch();
 
             $body = $envelope->getBody();
             $compressed = $envelope->getContentEncoding() === 'gzip';
