@@ -223,6 +223,10 @@ class RabbitMQConnection
                 $exchange->setFlags($options['flags']);
             }
 
+            if (!empty($options['arguments'])) {
+                $exchange->setArguments($options['arguments']);
+            }
+
             $this->_exchanges[$name] = $exchange;
         }
 
@@ -246,6 +250,10 @@ class RabbitMQConnection
 
             if (!empty($options['flags'])) {
                 $queue->setFlags($options['flags']);
+            }
+
+            if (!empty($options['arguments'])) {
+                $queue->setArguments($options['arguments']);
             }
 
             $this->_queues[$name] = $queue;
@@ -300,11 +308,15 @@ class RabbitMQConnection
         $attributes = [];
 
         $options += [
+            'attributes' => [],
             'silent' => false,
             'compress' => true,
             'serializer' => extension_loaded('msgpack') ? 'msgpack' : 'json',
-            'delivery_mode' => 1
+            'delivery_mode' => 1,
+            'exchange' => []
         ];
+
+        $attributes = $options['attributes'];
 
         switch ($options['serializer']) {
             case 'json':
